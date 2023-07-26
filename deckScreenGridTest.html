@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<title>Display a map on a webpage</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
+<script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+
+<style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+
+mapboxgl.accessToken = 'pk.eyJ1Ijoic2tlbGx5LXNhc2FraSIsImEiOiJjbGtoYWoxMXkwNm03M2ZxbzY1Zmlsa2MyIn0.YcHEj2UFMDOlYVMpmHx_0A'
+new deck.DeckGL({
+    container: 'map',
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
+    initialViewState: {
+      longitude: -122.45,
+      latitude: 37.8,
+      zoom: 15
+    },
+    controller: true,
+    layers: [
+      new deck.ScreenGridLayer({
+        id: 'screen-grid-layer',
+        data: 'Region1_Africa_EPW_Processing_locations.geojson',
+        cellSizePixels: 50,
+        colorRange: [
+          [0, 25, 0, 25],
+          [0, 85, 0, 85],
+          [0, 127, 0, 127],
+          [0, 170, 0, 170],
+          [0, 190, 0, 190],
+          [0, 255, 0, 255]
+        ],
+        getPosition: d => d.features.geometry.coordinates,
+        getWeight: d => d.features.properties.elevation,
+        opacity: 0.8,
+      })
+    ]
+  });
+  
+  </script>
+
+  </body>
+  </html>
+  
+  </script>
+   
+  </body>
+  </html>

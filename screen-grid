@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<title>Display a map on a webpage</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+
+<style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+
+mapboxgl.accessToken = 'pk.eyJ1Ijoic2tlbGx5LXNhc2FraSIsImEiOiJjbGtoYWoxMXkwNm03M2ZxbzY1Zmlsa2MyIn0.YcHEj2UFMDOlYVMpmHx_0A'
+new deck.DeckGL({
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
+    initialViewState: {
+      longitude: -122.45,
+      latitude: 37.8,
+      zoom: 15
+    },
+    controller: true,
+    layers: [
+      new deck.ScatterplotLayer({
+        data: [
+          {position: [-122.45, 37.8], color: [255, 0, 0], radius: 100}
+        ],
+        getColor: d => d.color,
+        getRadius: d => d.radius
+      })
+    ]
+  });</script>
+
+  </body>
+  </html>
+  
+  </script>
+   
+  </body>
+  </html>
