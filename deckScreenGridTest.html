@@ -22,22 +22,21 @@
 <div id="map"></div>
 
 <script>
-  
 
 new deck.DeckGL({
     container: 'map',
     mapStyle: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
     initialViewState: {
-      longitude: -122.45,
-      latitude: 37.8,
-      zoom: 15
+      longitude: 0,
+      latitude: 0,
+      zoom: 1.5
     },
     controller: true,
     layers: [
       new deck.ScreenGridLayer({
         id: 'screen-grid-layer',
-        data: 'africa2.geojson',
-        cellSizePixels: 50,
+        data: 'x-combined.geojson',
+        cellSizePixels: 20,
         colorRange: [
           [0, 25, 0, 25],
           [0, 85, 0, 85],
@@ -46,8 +45,8 @@ new deck.DeckGL({
           [0, 190, 0, 190],
           [0, 255, 0, 255]
         ],
-        getPosition: f => f.geometry.coordinates,
-        getWeight: f => f.properties.elevation,
+        getPosition: d => d.geometry.coordinates,
+        getWeight: d => d.properties.CDD10,
         opacity: 0.8,
       })
     ]
