@@ -22,6 +22,7 @@
 <div id="map"></div>
 
 <script>
+  
 
 new deck.DeckGL({
     container: 'map',
@@ -35,7 +36,7 @@ new deck.DeckGL({
     layers: [
       new deck.ScreenGridLayer({
         id: 'screen-grid-layer',
-        data: 'Region1_Africa_EPW_Processing_locations.geojson',
+        data: 'africa2.geojson',
         cellSizePixels: 50,
         colorRange: [
           [0, 25, 0, 25],
@@ -45,8 +46,8 @@ new deck.DeckGL({
           [0, 190, 0, 190],
           [0, 255, 0, 255]
         ],
-        getPosition: d => d.geometry.coordinates,
-        getWeight: d => d.properties.elevation,
+        getPosition: f => f.geometry.coordinates,
+        getWeight: f => f.properties.elevation,
         opacity: 0.8,
       })
     ]
