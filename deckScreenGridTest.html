@@ -23,7 +23,6 @@
 
 <script>
 
-mapboxgl.accessToken = 'pk.eyJ1Ijoic2tlbGx5LXNhc2FraSIsImEiOiJjbGtoYWoxMXkwNm03M2ZxbzY1Zmlsa2MyIn0.YcHEj2UFMDOlYVMpmHx_0A'
 new deck.DeckGL({
     container: 'map',
     mapStyle: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
@@ -46,8 +45,8 @@ new deck.DeckGL({
           [0, 190, 0, 190],
           [0, 255, 0, 255]
         ],
-        getPosition: d => d.features.geometry.coordinates,
-        getWeight: d => d.features.properties.elevation,
+        getPosition: d => d.geometry.coordinates,
+        getWeight: d => d.properties.elevation,
         opacity: 0.8,
       })
     ]
