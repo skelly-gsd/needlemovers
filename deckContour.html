@@ -1,0 +1,50 @@
+<html>
+  <head>
+    <title>deck.gl ContourLayer Example</title>
+
+    <script src="https://unpkg.com/deck.gl@^8.8.0/dist.min.js"></script>
+    <script src='https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js'></script>
+
+    <link href='https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css' rel='stylesheet' />
+    <style type="text/css">
+      body {
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+      }
+    </style>
+  </head>
+
+  <body></body>
+
+  <script type="text/javascript">
+    const {DeckGL, ContourLayer} = deck;
+
+    new DeckGL({
+      mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json',
+      initialViewState: {
+        longitude: -119.3,
+        latitude: 35.6,
+        zoom: 6,
+        maxZoom: 20
+      },
+      controller: true,
+      layers: [
+        new ContourLayer({
+          id: 'contourLayer',
+          data:
+          'x-combined.geojson',
+          getPosition: d => d.geometry.coordinates,
+          contours: [
+          {threshold: [0.1, 1], color: [255, 255, 178]},
+          {threshold: [1, 10], color: [254, 204, 92]},
+          {threshold: [10, 100], color: [253, 141, 60]},
+          {threshold: [100, 500], color: [240, 59, 32]},
+          {threshold: [500, 2000], color: [189, 0, 38]},
+          {threshold: [2000, 10000], color: [159, 0, 80]}
+          ]
+        })
+      ]
+    });
+  </script>
+</html>

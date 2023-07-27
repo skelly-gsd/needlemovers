@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="utf-8">
-<title>Display a map on a webpage</title>
+<title>Global Climate Data Exploration</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 
 <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
@@ -23,6 +23,11 @@
 
 <script>
 
+//HDD18
+//CDD10
+//1% Cooling DB
+//99% Heating DB
+
 new deck.DeckGL({
     container: 'map',
     mapStyle: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
@@ -36,18 +41,19 @@ new deck.DeckGL({
       new deck.ScreenGridLayer({
         id: 'screen-grid-layer',
         data: 'x-combined.geojson',
-        cellSizePixels: 20,
+        cellSizePixels: 15,
         colorRange: [
-          [0, 25, 0, 25],
-          [0, 85, 0, 85],
-          [0, 127, 0, 127],
-          [0, 170, 0, 170],
-          [0, 190, 0, 190],
-          [0, 255, 0, 255]
+          [16, 7, 136, 40],
+          [113, 0, 169, 85],
+          [175, 40, 146, 127],
+          [219, 91, 105, 170],
+          [251, 157, 60, 190],
+          [241, 250, 34, 255]
         ],
         getPosition: d => d.geometry.coordinates,
         getWeight: d => d.properties.CDD10,
         opacity: 0.8,
+        aggregation: "MEAN",
       })
     ]
   });
