@@ -33,8 +33,8 @@
         new ContourLayer({
           id: 'contourLayer',
           data:
-          'x-combined.geojson',
-          getPosition: d => d.geometry.coordinates,
+            'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf-bike-parking.json',
+          getPosition: d => d.COORDINATES,
           contours: [
           {threshold: [0.1, 1], color: [255, 255, 178]},
           {threshold: [1, 10], color: [254, 204, 92]},
