@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Select features around a clicked point</title>
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
+    <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>  
+
+    <!-- load in geocode search-->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css"
+      type="text/css"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+      #overlay {
+        position: absolute;
+        top: 10px;
+        right: 0;
+        width: 300px;
+        background-color: rgba(245, 245, 245, 0.8);
+        backdrop-filter: blur(8px) contrast(80%) saturate(80%);
+        max-height: 600px;
+        overflow: scroll;
+        padding: 16px;
+        border-radius: 4px;
+      }
+
+      .geocoder {
+        position: absolute;
+        z-index: 1;
+        width: 50%;
+        left: 50%;
+        margin-left: -25%;
+        top: 10px;
+      }
+      .mapboxgl-ctrl-geocoder {
+        min-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    
+
+    <div id="map"></div>
+    <div id="overlay">
+      <div id="clickData">hello</div>
+      <div id="pointData">hello</div>
+    </div>
+
+    <div id="geocoder" class="geocoder"></div>
+
+    <script>
+      // vars for click location
+      let lng;
+      let lat;
+      let ele;
+
+      const {MapboxLayer, ScatterplotLayer, ScreenGridLayer} = deck;
+      const zoomThreshold = 6;
+
+      function colorfunc(n) {
+        console.log(n);
+        return n / 255;
+      }
+
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoiZGhkcGljIiwiYSI6IkZfUEVoTUUifQ.rNj-tr8788GTdoGnyMEtAQ";
+      const map = new mapboxgl.Map({
+        container: "map",
+        projection: 'mercator',
+        // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+        style: "mapbox://styles/mapbox/dark-v11",
+        center: [0, 38.88],
+        minZoom: 2,
+        zoom: 2,
+      });
+
+      map.on("load", () => {
+        // Add a custom vector tileset source. The tileset used in
+        // this example contains a feature for every county in the U.S.
+        // Each county contains four properties. For example:
+        // {
+        //     COUNTY: "Uintah County",
+        //     FIPS: 49047,
+        //     median-income: 62363,
+        //     population: 34576
+        // }
+        /*map.addSource('counties', {
+            'type': 'vector',
+            'url': 'mapbox://mapbox.82pkq93d'
+        });*/
+
+        let srch = false;
+
+        let searcher = new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          marker: false,
+          addressAccuracy: "place",
+          zoom: 10.5,
+          flyTo: {
+              padding: { top: 100, bottom: 100, left: 100, right: 400 },
+              maxZoom: 10.5,
+            },
+          clearOnBlur: true,
+
+        });
+
+        
+
+        searcher.on("result", (e) => {
+          console.log("used!!!");
+          console.log(e.result.center);
+          //
+          srch = true;
+          //
+          lng = e.result.center[0]; //e.lngLat.lng;
+          lat = e.result.center[1]; //e.lngLat.lat;
+          // not working 100% yet, falters on double search
+          //getElevation(e);
+
+          map.setFilter("unclustered-highlighted", ["in", "WMO", ""]);
+        });
+
+        /*map.addControl(
+          // add search box
+          searcher
+        );*/
+
+        document.getElementById('geocoder').appendChild(searcher.onAdd(map));
+
+        map.on("moveend", (e) => {
+          console.log("A moveend event occurred.");
+          if (srch) {
+            getElevation(e);
+          }
+        });
+
+        map.addSource("epwAfrica", {
+          type: "geojson",
+          // Point to GeoJSON data. This example visualizes all M1.0+ earthquakes
+          // from 12/22/15 to 1/21/16 as logged by USGS' Earthquake hazards program.
+          data: "data/x-combined.geojson",
+          cluster: false,
+          clusterMaxZoom: 7, // Max zoom to cluster points on
+          clusterRadius: 100, // Radius of each cluster when clustering points (defaults to 50)
+        });
+
+        map.addLayer(new MapboxLayer({
+            id: 'screen-grid-layer',
+            type: ScreenGridLayer,
+            data: "x-combined.json",
+            cellSizePixels: 15,
+            colorRange: [
+            [16, 7, 136, 100],
+            [113, 0, 169, 125],
+            [175, 40, 146, 150],
+            [219, 91, 105, 185],
+            [251, 157, 60, 220],
+            [241, 250, 34, 255]
+            ],
+            getPosition: d => d.geometry.coordinates,
+            getWeight: d => d.properties.HDD18,
+            opacity: 0.8,
+            aggregation: "MEAN",
+        }))
+
+        map.addLayer({
+          id: "unclustered-point",
+          type: "circle",
+          source: "epwAfrica",
+          filter: ["!", ["has", "point_count"]],
+          paint: {
+            // works //'circle-color': ["rgb", ["get", "Elevation"],0,255],//'#ff0033',
+            /*'circle-color': [
+                    "step", 
+                    ["get", "Elevation"],
+                    '#ff0033',
+                    1000,
+                    '#ffff33',
+                    8000,
+                    '#00ff33'
+                ],*/
+
+            /*'circle-color': [
+                    "rgb", 
+                    ["*",0.03,["get", "CDD10"]],
+                    0,
+                    ["*",0.05,["get", "HDD18"]]
+                ],*/
+
+            /*
+                // interpolate elevation
+                'circle-color': [
+                    "interpolate", ["linear"], 
+                    ["get", "Elevation"],
+                    0,'#000033',
+                    2000,'#0033ff',
+                    4000,'#00ffff',
+                    6000,'#66ffff',
+                    8000,'#ffffff'
+                ],
+
+                'circle-radius': 2//,
+                //'circle-stroke-width': 1,
+                //'circle-stroke-color': '#fff'
+                */
+
+            // interpolate CDD10 + HDD18 = needlemover hours
+            "circle-color": [
+              "interpolate",
+              ["linear"],
+              ["+", ["get", "CDD10"], ["get", "HDD18"]],
+              0,
+              "#000033",
+              1000,
+              "#0000cc",
+              2000,
+              "#0033ff",
+              4000,
+              "#66ffff",
+              6000,
+              "#ffccff",
+            ],
+
+            "circle-radius": 3, //,
+            //'circle-stroke-width': 1,
+            //'circle-stroke-color': '#fff'
+
+            /*
+                // interpolate ? temps
+                'circle-color': [
+                    "interpolate", ["linear"], 
+                   //["+", ["get", "CDD10"],["get", "HDD18"]],
+                   ["*", 0.5, ["+",["get", "1% Cooling DB"],["get", "99% Heating DB"]]],
+                    -50,'#000033',
+                    -25,'#0000cc',
+                    0,'#0033ff',
+                    25,'#66ffff',
+                    50,'#ffccff'
+                ],
+
+                'circle-radius': 2//,
+                //'circle-stroke-width': 1,
+                //'circle-stroke-color': '#fff'
+                */
+          },
+        });
+
+        map.setLayoutProperty('unclustered-point', 'visibility', 'none');
+
+        map.addLayer(
+          {
+            id: "unclustered-highlighted",
+            type: "circle",
+            source: "epwAfrica",
+            //'source-layer': 'original',
+            paint: {
+              /*'fill-outline-color': '#484896',
+                    'fill-color': '#6e599f',
+                    'fill-opacity': 0.75*/
+              "circle-color": "#ff0033",
+              "circle-radius": 3,
+              //'circle-stroke-width': 1,
+              //'circle-stroke-color': '#fff'
+            },
+            //'filter': ['in', 'FIPS', ''] // demo version doesn't work with our data
+            //'filter': ['>=','Elevation', 1000] // filter works
+            //'filter': ['==',"Time Zone {GMT", "+1.0"] // filter works
+            filter: ["==", ["get", "WMO"], ""], // filter works
+          } //,
+          // Place polygons under labels, roads and buildings.
+          //'building'
+        );
+
+        /*
+// S-P-I-N
+// The following values can be changed to control rotation speed:
+// At low zooms, complete a revolution every two minutes.
+const secondsPerRevolution = 30;
+// Above zoom level 5, do not rotate.
+const maxSpinZoom = 5;
+// Rotate at intermediate speeds between zoom levels 3 and 5.
+const slowSpinZoom = 3;
+        let userInteracting = false;
+        let spinEnabled = true;
+ 
+function spinGlobe() {
+const zoom = map.getZoom();
+if (spinEnabled && !userInteracting && zoom < maxSpinZoom) {
+let distancePerSecond = 360 / secondsPerRevolution;
+if (zoom > slowSpinZoom) {
+// Slow spinning at higher zooms
+const zoomDif =
+(maxSpinZoom - zoom) / (maxSpinZoom - slowSpinZoom);
+distancePerSecond *= zoomDif;
+}
+const center = map.getCenter();
+center.lng -= distancePerSecond;
+// Smoothly animate the map over one second.
+// When this animation is complete, it calls a 'moveend' event.
+map.easeTo({ center, duration: 1000, easing: (n) => n });
+}
+}
+
+(spinGlobe());
+
+map.on('moveend', () => {
+spinGlobe();
+});
+*/
+
+
+        map.on('zoom', () => {
+          if (map.getZoom() > zoomThreshold) {
+            map.setLayoutProperty('unclustered-point', 'visibility', 'visible')
+            map.setLayoutProperty('screen-grid-layer', 'visibility', 'none')
+          } else {
+            map.setLayoutProperty('unclustered-point', 'visibility', 'none')
+            map.setLayoutProperty('screen-grid-layer', 'visibility', 'visible')
+          }
+        });
+
+        // Change the cursor to a pointer when the mouse is over the places layer.
+        map.on("mouseenter", "unclustered-point", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+
+        // Change it back to a pointer when it leaves.
+        map.on("mouseleave", "unclustered-point", () => {
+          map.getCanvas().style.cursor = "";
+        });
+
+        map.on("click", "unclustered-point", (e) => {
+          console.log("clicker!!!");
+          const coordinates = e.features[0].geometry.coordinates.slice();
+          const popName = e.features[0].properties.name;
+          const popElevation = `Elevation: ${e.features[0].properties.Elevation}m`;
+          const popDownload = `<a href="${e.features[0].properties.URL}">dowload file</a>`;
+          const popContent = `<h4>${popName}</h4><div>${popElevation}</div><div>${popDownload}</div>`
+
+          // make sure there aren't duplicates
+          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+          }
+
+          new mapboxgl.Popup()
+            .setLngLat(coordinates)
+            .setHTML(popContent)
+            .addTo(map);
+        });
+
+        map.on("click", (e) => {
+          console.log("click 1");
+          lng = e.lngLat.lng;
+          lat = e.lngLat.lat;
+          console.log("lng", lng, "lat", lat);
+          getElevation(e);
+        });
+
+        async function getElevation(e) {
+          // Construct the API request.
+          const query = await fetch(
+            `https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2/tilequery/${lng},${lat}.json?layers=contour&limit=50&access_token=${mapboxgl.accessToken}`,
+            { method: "GET" }
+          );
+          if (query.status !== 200) return;
+          const data = await query.json();
+          // Get all the returned features.
+          const allFeatures = data.features;
+          //console.log(allFeatures);
+          // For each returned feature, add elevation data to the elevations array.
+          const elevations = allFeatures.map(
+            (feature) => feature.properties.ele
+          );
+          //console.log(elevations);
+          // In the elevations array, find the largest value.
+          const highestElevation = Math.max(...elevations);
+          console.log(highestElevation);
+          ele = highestElevation;
+
+          //
+          /* - - - bbox method
+            // Set `bbox` as 5px reactangle area around clicked point.
+            let offset = 50;
+            const bbox = [
+                [e.point.x - offset, e.point.y - offset],
+                [e.point.x + offset, e.point.y + offset]
+            ];
+            // Find features intersecting the bounding box.
+            const selectedFeatures = map.queryRenderedFeatures(bbox, {
+                //layers: ['counties']
+                layers: ['unclustered-point']
+            });
+
+            console.log(selectedFeatures);
+            // - - - bbox method
+            */
+
+          //
+          //
+          // search with turf js
+          let clickPoint = turf.point([lng, lat]);
+
+          let nearestPoints = [];
+          console.log("nearestpoint", nearestPoints);
+
+          //let epwcheck = map.getSource('epwAfrica');
+          let epwcheck = map.querySourceFeatures("epwAfrica");
+          console.log(epwcheck);
+
+          let tfC = turf.featureCollection(epwcheck);
+
+          let searchLength = Math.min(15,epwcheck.length);
+          console.log("searchLength",searchLength)
+
+          for (let i = 0; i < searchLength; i++) {
+            //console.log("oop");
+
+            //var geoJ = turf.nearestPoint(clickPoint, tfC);
+            var geoJ = turf.nearestPoint(clickPoint, tfC);
+            console.log("geoj", geoJ);
+            nearestPoints.push(geoJ);
+            var id = geoJ.properties.featureIndex;
+            //remove from features point that was found
+            tfC.features.splice(id, 1);
+          }
+
+          console.log("np", nearestPoints);
+          //hospitals.features.splice(hospitals.features.length,0,nearestPoints);
+          //epwAfrica.features.push(...nearestPoints);
+
+          // Set a filter matching selected features by FIPS codes
+          // to activate the 'counties-highlighted' layer.
+          //map.setFilter('unclustered-highlighted', ['in', 'FIPS', ...fips]);
+          //map.setFilter('unclustered-highlighted', ['>=', 'Elevation', ...fips]);
+          const myFeatures = nearestPoints.map(
+            (feature) => feature.properties.WMO
+          );
+          map.setFilter("unclustered-highlighted", [
+            "in",
+            "WMO",
+            ...myFeatures,
+          ]);
+
+          //sort features
+
+          const sortedFeatures = nearestPoints.sort((a, b) => {
+            //console.log(a.properties.Elevation);
+            //return a.properties.Elevation - b.properties.Elevation; // works
+            //console.log(a.properties.Elevation, b.properties.Elevation, ele);
+            //console.log(a.geometry.coordinates[1], b.geometry.coordinates[1]);
+            //return Math.abs(a.properties.Elevation - ele) - Math.abs(b.properties.Elevation - ele); // single sort works
+
+            //return Math.abs(a.properties.Elevation - ele) - Math.abs(b.properties.Elevation - ele) || Math.abs(a.geometry.coordinates[1] - lat) - Math.abs(b.geometry.coordinates[1] - lat); // chained double sort: elevation, then latitude
+
+            //let en = Math.abs(a.properties.Elevation - ele) - Math.abs(b.properties.Elevation - ele)/8000;
+            //let ln = Math.abs(a.geometry.coordinates[1] - lat) - Math.abs(b.geometry.coordinates[1] - lat)/90;
+            //return en+ln;
+            return (
+              Math.abs(a.properties.Elevation - ele) -
+                Math.abs(b.properties.Elevation - ele) ||
+              Math.abs(a.geometry.coordinates[1] - lat) -
+                Math.abs(b.geometry.coordinates[1] - lat)
+            ); // chained double sort: elevation, then latitude
+          });
+
+          /*const myFeatures = sortedFeatures.map(
+                (feature) => feature.properties.WMO
+                
+            );
+            // Set a filter matching selected features by FIPS codes
+            // to activate the 'counties-highlighted' layer.
+            //map.setFilter('unclustered-highlighted', ['in', 'FIPS', ...fips]);
+            //map.setFilter('unclustered-highlighted', ['>=', 'Elevation', ...fips]);
+            map.setFilter('unclustered-highlighted', ['in', 'WMO', ...myFeatures]);
+            */
+
+          // add data to overlay
+          let pointData = document.querySelector("#pointData");
+          let clickData = document.querySelector("#clickData");
+          clickData.innerHTML = `Clicked point altitude: ${ele}m<br/>Latitude: ${lat.toFixed(
+            3
+          )}<hr><br/><h3>Files ranked by elevation then latitude similarity to clicked point:</h3>`;
+          pointData.innerHTML = "";
+          nearestPoints.forEach((element) => {
+            pointData.innerHTML += `<div>${element.properties.WMO}: ${element.properties.name}</div>`;
+            pointData.innerHTML += `<div>Elevation: ${element.properties.Elevation}m</div>`;
+            pointData.innerHTML += `<div>E Delta: ${Math.abs(
+              element.properties.Elevation - ele
+            )}m</div>`;
+            pointData.innerHTML += `<div>Latitude: ${element.geometry.coordinates[1].toFixed(
+              3
+            )}</div>`;
+            pointData.innerHTML += `<div>L Delta: ${Math.abs(
+              element.geometry.coordinates[1] - lat
+            ).toFixed(3)}</div>`;
+            pointData.innerHTML += `<div>Calc: ${
+              Math.abs(element.properties.Elevation - ele) / 8000 +
+              Math.abs(element.geometry.coordinates[1] - lat) / 90
+            }</div>`;
+            pointData.innerHTML += `<div><a href="${element.properties.URL}">Download File</a></div>`;
+            pointData.innerHTML += `<hr>`;
+          });
+
+          //
+          //let clickData = document.querySelector('#clickData');
+          //clickData.innerHTML = `Clicked point altitude: ${ele}m<br/>Files ranked by elevation similarity to clicked point:`;
+
+          let myClickedPoint = {
+            type: "Feature",
+            properties: {
+              Name: "clicked point",
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [lng, lat],
+            },
+          };
+
+          nearestPoints.push(myClickedPoint);
+          console.log("nacp", nearestPoints);
+
+          let bbox = turf.bbox(turf.featureCollection(nearestPoints));
+          console.log(bbox);
+          if (!srch) {
+            map.fitBounds(bbox, {
+              padding: { top: 100, bottom: 100, left: 100, right: 400 },
+            });
+          } else {
+            srch = false;
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
