@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<title>Global Climate Data Exploration</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
+<script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+
+<style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+
+const {MapboxLayer, ScatterplotLayer, ScreenGridLayer} = deck;
+
+mapboxgl.accessToken = 'pk.eyJ1Ijoic2tlbGx5LXNhc2FraSIsImEiOiJjbGtoYWoxMXkwNm03M2ZxbzY1Zmlsa2MyIn0.YcHEj2UFMDOlYVMpmHx_0A';
+
+const map = new mapboxgl.Map({
+        container: 'map',
+        // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [-122.4, 37.79],
+        zoom: 4,
+        projection: 'mercator'
+    });
+
+    map.on('load', () => {
+        // Add a geojson point source.
+        // Heatmap layers also work with a vector tile source.
+        map.addSource('earthquakes', {
+            'type': 'geojson',
+            'data': 'x-combined.geojson'
+        });
+
+        map.addLayer(new MapboxLayer({
+            id: 'deckgl-circle',
+            type: ScatterplotLayer,
+            data: 'x-combined.json',
+            getPosition: d => d.geometry.coordinates,
+            getFillColor: [255, 0, 0],
+            getRadius: 5000,
+            opacity: 0.3
+            }));
+
+        map.addLayer(new MapboxLayer({
+            id: 'screen-grid-layer',
+            type: ScreenGridLayer,
+            data: 'x-combined.json',
+            cellSizePixels: 20,
+            colorRange: [
+            [16, 7, 136, 100],
+            [113, 0, 169, 125],
+            [175, 40, 146, 150],
+            [219, 91, 105, 185],
+            [251, 157, 60, 220],
+            [241, 250, 34, 255]
+            ],
+            getPosition: d => d.geometry.coordinates,
+            getWeight: d => d.properties.HDD18,
+            opacity: 0.8,
+            aggregation: "MEAN",
+        }))
+/*
+new deck.DeckGL({
+    container: 'map',
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
+    initialViewState: {
+      longitude: 0,
+      latitude: 0,
+      zoom: 1.5
+    },
+    controller: true,
+    layers: [
+      new deck.ScreenGridLayer({
+        id: 'screen-grid-layer',
+        type: 
+        data: 'x-combined.json',
+        cellSizePixels: 15,
+        colorRange: [
+          [16, 7, 136, 40],
+          [113, 0, 169, 85],
+          [175, 40, 146, 127],
+          [219, 91, 105, 170],
+          [251, 157, 60, 190],
+          [241, 250, 34, 255]
+        ],
+        getPosition: d => d.geometry.coordinates,
+        getWeight: d => d.properties.HDD18,
+        opacity: 0.8,
+        aggregation: "MEAN",
+      })
+    ]
+  */
+  });
+
+  </script>
+
+  </body>
+  </html>
+  
+  </script>
+   
+  </body>
+  </html>

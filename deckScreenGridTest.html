@@ -40,7 +40,8 @@ new deck.DeckGL({
     layers: [
       new deck.ScreenGridLayer({
         id: 'screen-grid-layer',
-        data: 'x-combined.geojson',
+        type: 
+        data: 'x-combined.json',
         cellSizePixels: 15,
         colorRange: [
           [16, 7, 136, 40],
@@ -51,7 +52,7 @@ new deck.DeckGL({
           [241, 250, 34, 255]
         ],
         getPosition: d => d.geometry.coordinates,
-        getWeight: d => d.properties.CDD10,
+        getWeight: d => d.properties.HDD18,
         opacity: 0.8,
         aggregation: "MEAN",
       })
